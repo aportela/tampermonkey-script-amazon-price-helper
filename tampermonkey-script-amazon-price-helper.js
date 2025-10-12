@@ -109,6 +109,13 @@
     } catch (error) {
       console.error(error);
     }
+
+    const pricesHTMLList = hagglezonPrices
+      .map((price) => {
+        return `<a style="margin-right: 1em;" href="${price.url}"><img style="width: 24px; height: 24px;" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
+      })
+      .join("");
+
     const html = `
     <hr>
     <p>
@@ -117,6 +124,7 @@
     <hr>
     <p style="text-align: center;">
       <a href="${hagglezonURL}" target="_blank">Compare prices</a>
+      <p>${pricesHTMLList}</p>
     </p>
     <hr>`;
     console.debug("HTML block to append:", html);
