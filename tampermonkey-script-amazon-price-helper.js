@@ -17,7 +17,7 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-(function () {
+(async function () {
   "use strict";
 
   const getASINFromAmazonURL = (url) => {
@@ -39,7 +39,8 @@
   };
 
   const getHagglezonLinkURL = (asinCode) => {
-    return `https://www.hagglezon.com/es/s/${asinCode}`;
+    // TODO: use current amazon country language (es/en/fr/it...)
+    return `https://www.hagglezon.com/en/s/${asinCode}`;
   };
 
   const cleanAmazonProductPage = (url) => {
@@ -47,45 +48,47 @@
   };
 
   const fetchHagglezonPrices = (url) => {
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: url,
-      onload: function (response) {
-        if (response.status === 200) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(
-            response.responseText,
-            "text/html"
-          );
-          const pricesList = doc.querySelector("ul.list-prices");
-          if (pricesList) {
-            const prices = Array.from(pricesList.querySelectorAll("li")).map(
-              (item) => {
-                const link = item.querySelector("a");
-                const img = item.querySelector("img");
-                let imgSrc = img.getAttribute("src");
-                if (imgSrc.startsWith("/assets/")) {
-                  imgSrc = `https://www.hagglezon.com${imgSrc}`;
-                }
-                const price = item.querySelector(".price");
-                return {
-                  url: link ? cleanAmazonProductPage(link.href) : null,
-                  countryImage: img ? imgSrc : null,
-                  price: price ? price.textContent : null,
-                };
-              }
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "GET",
+        url: url,
+        onload: function (response) {
+          if (response.status === 200) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(
+              response.responseText,
+              "text/html"
             );
-            console.log(prices);
+            const pricesList = doc.querySelector("ul.list-prices");
+            if (pricesList) {
+              const prices = Array.from(pricesList.querySelectorAll("li")).map(
+                (item) => {
+                  const link = item.querySelector("a");
+                  const img = item.querySelector("img");
+                  let imgSrc = img.getAttribute("src");
+                  if (imgSrc.startsWith("/assets/")) {
+                    imgSrc = `https://www.hagglezon.com${imgSrc}`;
+                  }
+                  const price = item.querySelector(".price");
+                  return {
+                    url: link ? cleanAmazonProductPage(link.href) : null,
+                    countryImage: img ? imgSrc : null,
+                    price: price ? price.textContent : null,
+                  };
+                }
+              );
+              resolve(prices);
+            } else {
+              reject("tag ul.list-prices not found");
+            }
           } else {
-            console.error("tag ul.list-prices not found");
+            reject("error fetching hagglezon page");
           }
-        } else {
-          console.error("error fetching hagglezon page");
-        }
-      },
-      onerror: function (error) {
-        console.error("error fetching hagglezon page");
-      },
+        },
+        onerror: function (error) {
+          reject("error fetching hagglezon page");
+        },
+      });
     });
   };
 
@@ -99,7 +102,28 @@
     console.debug("CamelCamelCamel link URL:", camelCamelCamelLinkURL);
     const hagglezonURL = getHagglezonLinkURL(ASIN);
     console.debug("Hagglezon URL:", hagglezonURL);
-    fetchHagglezonPrices(hagglezonURL);
+    let hagglezonPrices = [];
+    try {
+      hagglezonPrices = await fetchHagglezonPrices(hagglezonURL);
+      console.debug("Fetched prices:", prices);
+    } catch (error) {
+      console.error(error);
+    }
+    const html = `<hr><p><a href="${camelCamelCamelLinkURL}" target="_blank"><img alt="camelcamelcamel chart" src="${camelCamelCamelImageURL}"></a></p><hr><p style="text-align: center;"><a href="${hagglezonURL}" target="_blank">Compare prices</a></p><hr>`;
+    console.debug("HTML block to append:", html);
+    let el = document.getElementById("corePrice_desktop");
+    if (el) {
+      console.debug("corePrice_desktop html element found, appending block...");
+      el.innerHTML += html;
+    } else {
+      el = document.getElementById("apex_desktop");
+      if (el) {
+        console.debug("apex_desktop html element found, appending block...");
+        el.innerHTML += html;
+      } else {
+        console.debug("None html element found, can not append block");
+      }
+    }
   } else {
     console.error("NO ASIN CODE FOUND");
   }
