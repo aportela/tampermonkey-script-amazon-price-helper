@@ -109,7 +109,16 @@
     } catch (error) {
       console.error(error);
     }
-    const html = `<hr><p><a href="${camelCamelCamelLinkURL}" target="_blank"><img alt="camelcamelcamel chart" src="${camelCamelCamelImageURL}"></a></p><hr><p style="text-align: center;"><a href="${hagglezonURL}" target="_blank">Compare prices</a></p><hr>`;
+    const html = `
+    <hr>
+    <p>
+      <a href="${camelCamelCamelLinkURL}" target="_blank"><img alt="camelcamelcamel chart" src="${camelCamelCamelImageURL}" rel="noreferrer" referrerpolicy="no-referrer"></a>
+    </p>
+    <hr>
+    <p style="text-align: center;">
+      <a href="${hagglezonURL}" target="_blank">Compare prices</a>
+    </p>
+    <hr>`;
     console.debug("HTML block to append:", html);
     let el = document.getElementById("corePrice_desktop");
     if (el) {
