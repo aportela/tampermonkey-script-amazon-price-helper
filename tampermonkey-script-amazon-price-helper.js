@@ -20,6 +20,9 @@
 (async function () {
   "use strict";
 
+  // grow page width
+  GM_addStyle("div#dp { max-width: 98% !important; }");
+
   const getASINFromAmazonURL = (url) => {
     const regex = /\/dp\/([A-Z0-9]{10})/;
     const matches = regex.exec(url);
