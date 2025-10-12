@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  function getASINFromAmazonURL(url) {
+  const getASINFromAmazonURL = (url) => {
     const regex = /\/dp\/([A-Z0-9]{10})/;
     const matches = regex.exec(url);
     if (matches && matches.length == 2) {
@@ -28,9 +28,32 @@
     } else {
       return null;
     }
-  }
+  };
+
+  const getCamelCamelCamelGraphImageURL = (asinCode) => {
+    return `https://charts.camelcamelcamel.com/es/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=es_ES`;
+  };
+
+  const getCamelCamelCamelLinkURL = (asinCode) => {
+    return `https://es.camelcamelcamel.com/product/${asinCode}`;
+  };
+
+  const getHagglezonLinkURL = (asinCode) => {
+    return `https://www.hagglezon.com/es/s/${asinCode}`;
+  };
 
   console.groupCollapsed("tampermonkey-script-amazon-price-helper");
-  console.debug(getASINFromAmazonURL(window.location.href));
+  const ASIN = getASINFromAmazonURL(window.location.href);
+  if (ASIN) {
+    console.debug("ASIN CODE:", ASIN);
+    const camelCamelCamelImageURL = getCamelCamelCamelGraphImageURL(ASIN);
+    console.debug("CamelCamelCamel image URL:", camelCamelCamelImageURL);
+    const camelCamelCamelLinkURL = getCamelCamelCamelLinkURL(ASIN);
+    console.debug("CamelCamelCamel link URL:", camelCamelCamelLinkURL);
+    const hagglezonURL = getHagglezonLinkURL(ASIN);
+    console.debug("Hagglezon URL:", hagglezonURL);
+  } else {
+    console.error("NO ASIN CODE FOUND");
+  }
   console.groupEnd();
 })();
