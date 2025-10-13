@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tampermonkey-script-amazon-price-helper
 // @namespace    https://github.com/aportela/tampermonkey-script-amazon-price-helper
-// @version      0.3
+// @version      0.4
 // @description  Adds price chart and country store prices to Amazon product pages
 // @author       aportela
 // @homepage     https://github.com/aportela/tampermonkey-script-amazon-price-helper
@@ -21,14 +21,21 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-(async function () {
-  "use strict";
+"use strict";
 
-  const css = `
+const css = `
 
   div#dp
   {
     max-width: 98% !important;
+  }
+
+  div#tampermonkey-script-amazon-price-helper
+  {
+    border: 1px solid rgba(0,0,0,.1);
+    border-radius: 8px;
+    margin: 0.75em 0em;
+    box-shadow: 2px 2px 4px #ddd;
   }
 
   .prices-container
@@ -86,176 +93,176 @@
 
   `;
 
-  // grow page width
-  GM_addStyle(css);
+// grow page width
+GM_addStyle(css);
 
-  const getASINFromAmazonURL = (url) => {
-    const regex = /\/dp\/([A-Z0-9]{10})/;
-    const matches = regex.exec(url);
-    if (matches && matches.length == 2) {
-      return matches[1];
-    } else {
-      return null;
-    }
-  };
+const getASINFromAmazonURL = (url) => {
+  const regex = /\/dp\/([A-Z0-9]{10})/;
+  const matches = regex.exec(url);
+  if (matches && matches.length == 2) {
+    return matches[1];
+  } else {
+    return null;
+  }
+};
 
-  const getCamelCamelCamelGraphImageURL = (asinCode, lang = "en") => {
-    if (lang == "de" || lang == "es" || lang == "fr" || lang == "it") {
-      return `https://charts.camelcamelcamel.com/${lang}/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=${lang}`;
-    } else {
-      return `https://charts.camelcamelcamel.com/us/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=en`;
-    }
-  };
+const getCamelCamelCamelGraphImageURL = (asinCode, lang = "en") => {
+  if (lang == "de" || lang == "es" || lang == "fr" || lang == "it") {
+    return `https://charts.camelcamelcamel.com/${lang}/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=${lang}`;
+  } else {
+    return `https://charts.camelcamelcamel.com/us/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=en`;
+  }
+};
 
-  const getCamelCamelCamelCountryFromURL = (url) => {
-    let country = null;
-    const parsedUrl = new URL(url);
-    switch (parsedUrl.hostname) {
-      case "www.amazon.com.au":
-        country = "au";
-        break;
-      case "www.amazon.ca":
-        country = "ca";
-        break;
-      case "www.amazon.de":
-        country = "de";
-        break;
-      case "www.amazon.es":
-        country = "es";
-        break;
-      case "www.amazon.fr":
-        country = "fr";
-        break;
-      case "www.amazon.it":
-        country = "it";
-        break;
-      case "www.amazon.co.uk":
-        country = "uk";
-        break;
-      case "www.amazon.com":
-      default:
-        country = "us";
-        break;
-    }
-    return country;
-  };
+const getCamelCamelCamelCountryFromURL = (url) => {
+  let country = null;
+  const parsedUrl = new URL(url);
+  switch (parsedUrl.hostname) {
+    case "www.amazon.com.au":
+      country = "au";
+      break;
+    case "www.amazon.ca":
+      country = "ca";
+      break;
+    case "www.amazon.de":
+      country = "de";
+      break;
+    case "www.amazon.es":
+      country = "es";
+      break;
+    case "www.amazon.fr":
+      country = "fr";
+      break;
+    case "www.amazon.it":
+      country = "it";
+      break;
+    case "www.amazon.co.uk":
+      country = "uk";
+      break;
+    case "www.amazon.com":
+    default:
+      country = "us";
+      break;
+  }
+  return country;
+};
 
-  const getCamelCamelCamelLangFromURL = (url) => {
-    let language = null;
-    const parsedUrl = new URL(url);
-    switch (parsedUrl.hostname) {
-      case "www.amazon.de":
-        language = "de";
-        break;
-      case "www.amazon.es":
-        language = "es";
-        break;
-      case "www.amazon.fr":
-        language = "fr";
-        break;
-      case "www.amazon.it":
-        language = "it";
-        break;
-      case "www.amazon.com.au":
-      case "www.amazon.ca":
-      case "www.amazon.co.uk":
-      case "www.amazon.com":
-      default:
-        language = "en";
-        break;
-    }
-    return language;
-  };
+const getCamelCamelCamelLangFromURL = (url) => {
+  let language = null;
+  const parsedUrl = new URL(url);
+  switch (parsedUrl.hostname) {
+    case "www.amazon.de":
+      language = "de";
+      break;
+    case "www.amazon.es":
+      language = "es";
+      break;
+    case "www.amazon.fr":
+      language = "fr";
+      break;
+    case "www.amazon.it":
+      language = "it";
+      break;
+    case "www.amazon.com.au":
+    case "www.amazon.ca":
+    case "www.amazon.co.uk":
+    case "www.amazon.com":
+    default:
+      language = "en";
+      break;
+  }
+  return language;
+};
 
-  const camelCamelCamelCountries = [
-    "au",
-    "ca",
-    "de",
-    "es",
-    "fr",
-    "it",
-    "uk",
-    "us",
-  ];
+const camelCamelCamelCountries = [
+  "au",
+  "ca",
+  "de",
+  "es",
+  "fr",
+  "it",
+  "uk",
+  "us",
+];
 
-  const getCamelCamelCamelLinkURL = (asinCode, country = "us") => {
-    if (camelCamelCamelCountries.includes(country)) {
-      return `https://${country}.camelcamelcamel.com/product/${asinCode}`;
-    } else {
-      return `https://us.camelcamelcamel.com/product/${asinCode}`;
-    }
-  };
+const getCamelCamelCamelLinkURL = (asinCode, country = "us") => {
+  if (camelCamelCamelCountries.includes(country)) {
+    return `https://${country}.camelcamelcamel.com/product/${asinCode}`;
+  } else {
+    return `https://us.camelcamelcamel.com/product/${asinCode}`;
+  }
+};
 
-  const getHagglezonLinkURL = (asinCode) => {
-    // TODO: use current amazon country language (es/en/fr/it...)
-    return `https://www.hagglezon.com/en/s/${asinCode}`;
-  };
+const getHagglezonLinkURL = (asinCode) => {
+  // TODO: use current amazon country language (es/en/fr/it...)
+  return `https://www.hagglezon.com/en/s/${asinCode}`;
+};
 
-  const cleanAmazonProductPage = (url) => {
-    return new URL(url).origin + "/dp/" + getASINFromAmazonURL(url);
-  };
+const cleanAmazonProductPage = (url) => {
+  return new URL(url).origin + "/dp/" + getASINFromAmazonURL(url);
+};
 
-  const fetchHagglezonPrices = (url) => {
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "GET",
-        url: url,
-        onload: function (response) {
-          if (response.status === 200) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(
-              response.responseText,
-              "text/html"
-            );
-            const pricesList = doc.querySelector("ul.list-prices");
-            if (pricesList) {
-              const currentAmazonDomain = new URL(window.location.href)
-                .hostname;
-              const prices = Array.from(pricesList.querySelectorAll("li")).map(
-                (item) => {
-                  const link = item.querySelector("a");
-                  const img = item.querySelector("img");
-                  let imgSrc = img.getAttribute("src");
-                  if (imgSrc.startsWith("/assets/")) {
-                    imgSrc = `https://www.hagglezon.com${imgSrc}`;
-                  }
-                  const price = item.querySelector(".price");
-                  return {
-                    url: link ? cleanAmazonProductPage(link.href) : null,
-                    countryImage: img ? imgSrc : null,
-                    price: price ? price.textContent : null,
-                    currentDomain:
-                      currentAmazonDomain == new URL(link.href).hostname,
-                  };
+const fetchHagglezonPrices = (url) => {
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: url,
+      onload: function (response) {
+        if (response.status === 200) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(
+            response.responseText,
+            "text/html"
+          );
+          const pricesList = doc.querySelector("ul.list-prices");
+          if (pricesList) {
+            const currentAmazonDomain = new URL(window.location.href).hostname;
+            const prices = Array.from(pricesList.querySelectorAll("li")).map(
+              (item) => {
+                const link = item.querySelector("a");
+                const img = item.querySelector("img");
+                let imgSrc = img.getAttribute("src");
+                if (imgSrc.startsWith("/assets/")) {
+                  imgSrc = `https://www.hagglezon.com${imgSrc}`;
                 }
-              );
-              resolve(prices);
-            } else {
-              reject("tag ul.list-prices not found");
-            }
+                const price = item.querySelector(".price");
+                return {
+                  url: link ? cleanAmazonProductPage(link.href) : null,
+                  countryImage: img ? imgSrc : null,
+                  price: price ? price.textContent : null,
+                  currentDomain:
+                    currentAmazonDomain == new URL(link.href).hostname,
+                };
+              }
+            );
+            resolve(prices);
           } else {
-            reject("error fetching hagglezon page");
+            reject("tag ul.list-prices not found");
           }
-        },
-        onerror: function (error) {
+        } else {
           reject("error fetching hagglezon page");
-        },
-      });
+        }
+      },
+      onerror: function (error) {
+        reject("error fetching hagglezon page");
+      },
     });
-  };
+  });
+};
 
+const main = async (url) => {
   console.groupCollapsed("tampermonkey-script-amazon-price-helper");
-  const ASIN = getASINFromAmazonURL(window.location.href);
+  const ASIN = getASINFromAmazonURL(url);
   if (ASIN) {
     console.debug("ASIN CODE:", ASIN);
     const camelCamelCamelImageURL = getCamelCamelCamelGraphImageURL(
       ASIN,
-      getCamelCamelCamelLangFromURL(window.location.href)
+      getCamelCamelCamelLangFromURL(url)
     );
     console.debug("CamelCamelCamel image URL:", camelCamelCamelImageURL);
     const camelCamelCamelLinkURL = getCamelCamelCamelLinkURL(
       ASIN,
-      getCamelCamelCamelCountryFromURL(window.location.href)
+      getCamelCamelCamelCountryFromURL(url)
     );
     console.debug("CamelCamelCamel link URL:", camelCamelCamelLinkURL);
     const hagglezonURL = getHagglezonLinkURL(ASIN);
@@ -275,17 +282,25 @@
       .join("");
 
     const html = `
-    <hr>
-    <p>
-      <a href="${camelCamelCamelLinkURL}" target="_blank"><img alt="camelcamelcamel chart" src="${camelCamelCamelImageURL}" rel="noreferrer" referrerpolicy="no-referrer"></a>
-    </p>
-    <hr>
-    <p style="text-align: center;">
-      <a href="${hagglezonURL}" target="_blank">Compare prices</a>
-      <p class="prices-container">${pricesHTMLList}</p>
-    </p>
-    <hr>`;
-    console.debug("HTML block to append:", html);
+    <div id="tampermonkey-script-amazon-price-helper">
+      <p>
+        <a href="${camelCamelCamelLinkURL}" target="_blank"><img alt="camelcamelcamel chart" src="${camelCamelCamelImageURL}" rel="noreferrer" referrerpolicy="no-referrer"></a>
+      </p>
+      <hr>
+      <p style="text-align: center;">
+        <a href="${hagglezonURL}" target="_blank">Compare prices</a>
+        <p class="prices-container">${pricesHTMLList}</p>
+      </p>
+    </div>
+    `;
+    //console.debug("HTML block to append:", html);
+    const existingDiv = document.getElementById(
+      "tampermonkey-script-amazon-price-helper"
+    );
+    if (existingDiv) {
+      console.debug("Previous script data found, removing...");
+      existingDiv.remove();
+    }
     let el = document.getElementById("corePrice_desktop");
     if (el) {
       console.debug("corePrice_desktop html element found, appending block...");
@@ -303,4 +318,38 @@
     console.error("NO ASIN CODE FOUND");
   }
   console.groupEnd();
-})();
+};
+
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = (state, title, url) => {
+  originalPushState.apply(history, arguments);
+  handleUrlChange(url);
+};
+
+history.replaceState = (state, title, url) => {
+  originalReplaceState.apply(history, arguments);
+  handleUrlChange(url);
+};
+
+window.addEventListener("load", () => {
+  handleUrlChange(window.location.href);
+});
+
+const handleUrlChange = (url) => {
+  // this is required because on some amazon product links (ex: change product color, size...)
+  // some refresh is done with partial URL, and we need to re-launch the script
+  const fullURL = url.startsWith("http")
+    ? url
+    : `${window.location.origin}${url}`;
+  if (document.readyState === "complete") {
+    main(fullURL);
+  } else {
+    const onLoad = () => {
+      main(fullURL);
+      window.removeEventListener("load", onLoad);
+    };
+    window.addEventListener("load", onLoad);
+  }
+};
