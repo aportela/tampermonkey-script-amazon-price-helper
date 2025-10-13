@@ -5,7 +5,9 @@
 // @description  Adds price chart and country store prices to Amazon product pages
 // @author       aportela
 // @homepage     https://github.com/aportela/tampermonkey-script-amazon-price-helper
+// @match        https://www.amazon.com.au/*
 // @match        https://www.amazon.com.be/*
+// @match        https://www.amazon.ca/*
 // @match        https://www.amazon.co.uk/*
 // @match        https://www.amazon.de/*
 // @match        https://www.amazon.es/*
@@ -20,8 +22,55 @@
 (async function () {
   "use strict";
 
+  const css = `
+
+  div#dp
+  {
+    max-width: 98% !important;
+  }
+
+  .price-container
+  {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+  }
+
+  .price-link
+  {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: calc(25% - 1em); /* Cuatro columnas */
+      text-align: center;
+  }
+
+  .price-image
+  {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 0.5em;
+  }
+
+  @media (max-width: 768px)
+  {
+      .price-link
+      {
+          width: calc(50% - 1em); /* 2 columnas en pantallas más pequeñas */
+      }
+  }
+
+  @media (max-width: 480px)
+  {
+      .price-link
+      {
+          width: 100%; /* 1 columna en pantallas muy pequeñas */
+      }
+  }
+
+  `;
   // grow page width
-  GM_addStyle("div#dp { max-width: 98% !important; }");
+  GM_addStyle(css);
 
   const getASINFromAmazonURL = (url) => {
     const regex = /\/dp\/([A-Z0-9]{10})/;
@@ -33,12 +82,90 @@
     }
   };
 
-  const getCamelCamelCamelGraphImageURL = (asinCode) => {
-    return `https://charts.camelcamelcamel.com/es/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=es_ES`;
+  const getCamelCamelCamelGraphImageURL = (asinCode, lang = "en") => {
+    if (lang == "de" || lang == "es" || lang == "fr" || lang == "it") {
+      return `https://charts.camelcamelcamel.com/${lang}/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=${lang}`;
+    } else {
+      return `https://charts.camelcamelcamel.com/us/${asinCode}/amazon.png?force=1&zero=0&w=725&h=440&desired=false&legend=1&ilt=1&tp=all&fo=0&lang=en`;
+    }
   };
 
-  const getCamelCamelCamelLinkURL = (asinCode) => {
-    return `https://es.camelcamelcamel.com/product/${asinCode}`;
+  const getCamelCamelCamelCountryFromURL = (url) => {
+    let country = null;
+    const parsedUrl = new URL(url);
+    switch (parsedUrl.hostname) {
+      case "www.amazon.com.au":
+        country = "au";
+      case "www.amazon.ca":
+        country = "ca";
+        break;
+      case "www.amazon.de":
+        country = "de";
+        break;
+      case "www.amazon.es":
+        country = "es";
+        break;
+      case "www.amazon.fr":
+        country = "fr";
+        break;
+      case "www.amazon.it":
+        country = "it";
+        break;
+      case "www.amazon.co.uk":
+        country = "uk";
+        break;
+      case "www.amazon.com":
+      default:
+        country = "us";
+        break;
+    }
+    return country;
+  };
+
+  const getCamelCamelCamelLangFromURL = (url) => {
+    let language = null;
+    const parsedUrl = new URL(url);
+    switch (parsedUrl.hostname) {
+      case "www.amazon.de":
+        language = "de";
+        break;
+      case "www.amazon.es":
+        language = "es";
+        break;
+      case "www.amazon.fr":
+        language = "fr";
+        break;
+      case "www.amazon.it":
+        language = "it";
+        break;
+      case "www.amazon.com.au":
+      case "www.amazon.ca":
+      case "www.amazon.co.uk":
+      case "www.amazon.com":
+      default:
+        language = "en";
+        break;
+    }
+    return language;
+  };
+
+  const camelCamelCamelCountries = [
+    "au",
+    "ca",
+    "de",
+    "es",
+    "fr",
+    "it",
+    "uk",
+    "us",
+  ];
+
+  const getCamelCamelCamelLinkURL = (asinCode, country = "us") => {
+    if (camelCamelCamelCountries.includes(country)) {
+      return `https://${country}.camelcamelcamel.com/product/${asinCode}`;
+    } else {
+      return `https://us.camelcamelcamel.com/product/${asinCode}`;
+    }
   };
 
   const getHagglezonLinkURL = (asinCode) => {
@@ -99,9 +226,15 @@
   const ASIN = getASINFromAmazonURL(window.location.href);
   if (ASIN) {
     console.debug("ASIN CODE:", ASIN);
-    const camelCamelCamelImageURL = getCamelCamelCamelGraphImageURL(ASIN);
+    const camelCamelCamelImageURL = getCamelCamelCamelGraphImageURL(
+      ASIN,
+      getCamelCamelCamelLangFromURL(window.location.href)
+    );
     console.debug("CamelCamelCamel image URL:", camelCamelCamelImageURL);
-    const camelCamelCamelLinkURL = getCamelCamelCamelLinkURL(ASIN);
+    const camelCamelCamelLinkURL = getCamelCamelCamelLinkURL(
+      ASIN,
+      getCamelCamelCamelCountryFromURL(window.location.href)
+    );
     console.debug("CamelCamelCamel link URL:", camelCamelCamelLinkURL);
     const hagglezonURL = getHagglezonLinkURL(ASIN);
     console.debug("Hagglezon URL:", hagglezonURL);
@@ -115,7 +248,7 @@
 
     const pricesHTMLList = hagglezonPrices
       .map((price) => {
-        return `<a style="margin-right: 1em;" href="${price.url}"><img style="width: 24px; height: 24px;" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
+        return `<a class="price-link" href="${price.url}"><img class="price-image" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
       })
       .join("");
 
@@ -127,7 +260,7 @@
     <hr>
     <p style="text-align: center;">
       <a href="${hagglezonURL}" target="_blank">Compare prices</a>
-      <p>${pricesHTMLList}</p>
+      <p class="price-container">${pricesHTMLList}</p>
     </p>
     <hr>`;
     console.debug("HTML block to append:", html);
