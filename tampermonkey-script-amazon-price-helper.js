@@ -111,6 +111,7 @@
     switch (parsedUrl.hostname) {
       case "www.amazon.com.au":
         country = "au";
+        break;
       case "www.amazon.ca":
         country = "ca";
         break;
