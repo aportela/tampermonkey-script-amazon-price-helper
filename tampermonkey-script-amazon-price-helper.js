@@ -29,11 +29,17 @@
     max-width: 98% !important;
   }
 
-  .price-container
+  .prices-container
   {
       display: flex;
       flex-wrap: wrap;
       gap: 1em;
+  }
+
+  .price-current
+  {
+    border: 1px solid  rgba(128, 128, 128, 1) ! important;
+    background: rgba(228, 228, 228, 1);
   }
 
   .price-link
@@ -41,8 +47,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: calc(25% - 1em); /* Cuatro columnas */
+      width: calc(25% - 1em); /* four columns */
       text-align: center;
+      border: 1px solid  rgba(255, 255, 255, 1);
+      padding: 4px 0px;
+  }
+
+  .price-link:hover {
+    text-decoration: none;
+    border: 1px solid  rgba(185, 185, 185, 1);
+    background: rgba(238, 238, 238, 1);
   }
 
   .price-image
@@ -56,7 +70,7 @@
   {
       .price-link
       {
-          width: calc(50% - 1em); /* 2 columnas en pantallas más pequeñas */
+          width: calc(50% - 1em); /* 2 columns on small screens */
       }
   }
 
@@ -64,11 +78,12 @@
   {
       .price-link
       {
-          width: 100%; /* 1 columna en pantallas muy pequeñas */
+          width: 100%; /* 1 column on smaller screens */
       }
   }
 
   `;
+
   // grow page width
   GM_addStyle(css);
 
@@ -191,6 +206,8 @@
             );
             const pricesList = doc.querySelector("ul.list-prices");
             if (pricesList) {
+              const currentAmazonDomain = new URL(window.location.href)
+                .hostname;
               const prices = Array.from(pricesList.querySelectorAll("li")).map(
                 (item) => {
                   const link = item.querySelector("a");
@@ -204,6 +221,8 @@
                     url: link ? cleanAmazonProductPage(link.href) : null,
                     countryImage: img ? imgSrc : null,
                     price: price ? price.textContent : null,
+                    currentDomain:
+                      currentAmazonDomain == new URL(link.href).hostname,
                   };
                 }
               );
@@ -241,14 +260,14 @@
     let hagglezonPrices = [];
     try {
       hagglezonPrices = await fetchHagglezonPrices(hagglezonURL);
-      console.debug("Fetched prices:", prices);
+      console.debug("Fetched prices:", hagglezonPrices);
     } catch (error) {
       console.error(error);
     }
-
     const pricesHTMLList = hagglezonPrices
       .map((price) => {
-        return `<a class="price-link" href="${price.url}"><img class="price-image" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
+        const currentDomainClass = price.currentDomain ? "price-current" : "";
+        return `<a class="price-link ${currentDomainClass}" href="${price.url}"><img class="price-image" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
       })
       .join("");
 
@@ -260,7 +279,7 @@
     <hr>
     <p style="text-align: center;">
       <a href="${hagglezonURL}" target="_blank">Compare prices</a>
-      <p class="price-container">${pricesHTMLList}</p>
+      <p class="prices-container">${pricesHTMLList}</p>
     </p>
     <hr>`;
     console.debug("HTML block to append:", html);
