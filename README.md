@@ -19,3 +19,7 @@ https://github.com/aportela/tampermonkey-script-amazon-price-helper/raw/refs/hea
 It’s possible that you’ll see an alert message from TamperMonkey notifying you that an script it’s trying to access a cross-origin resource (this is because the script makes a background request to the Hagglezone website to fetch the price comparison)
 
 <img width="2562" height="620" alt="03-warning" src="https://github.com/user-attachments/assets/be6150f2-4b73-4f83-8b92-e322a32a8fa2" />
+
+# Warning / Attention
+
+This script DOES NOT INCLUDE AFFILIATES; no link or action is modified to add an affiliate for the purpose of earning money through commissions.
