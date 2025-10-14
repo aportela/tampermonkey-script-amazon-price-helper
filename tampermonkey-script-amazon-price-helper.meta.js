@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tampermonkey-script-amazon-price-helper
 // @namespace    https://github.com/aportela/tampermonkey-script-amazon-price-helper
-// @version      0.4
+// @version      0.5
 // @description  Adds price chart and country store prices to Amazon product pages
 // @author       aportela
 // @homepage     https://github.com/aportela/tampermonkey-script-amazon-price-helper
