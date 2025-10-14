@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tampermonkey-script-amazon-price-helper
 // @namespace    https://github.com/aportela/tampermonkey-script-amazon-price-helper
-// @version      0.5
+// @version      0.6
 // @description  Adds price chart and country store prices to Amazon product pages
 // @author       aportela
 // @homepage     https://github.com/aportela/tampermonkey-script-amazon-price-helper
@@ -37,6 +37,7 @@ const css = `
     border-radius: 8px;
     margin: 0.75em 0em;
     box-shadow: 2px 2px 4px #ddd;
+    padding: 8px;
   }
 
   .prices-container
@@ -275,12 +276,18 @@ const main = async (url) => {
     } catch (error) {
       console.error(error);
     }
+
     const pricesHTMLList = hagglezonPrices
       .map((price) => {
         const currentDomainClass = price.currentDomain ? "price-current" : "";
         return `<a class="price-link ${currentDomainClass}" href="${price.url}"><img class="price-image" src="${price.countryImage}" alt="Country flag">${price.price}</a>`;
       })
       .join("");
+
+    const pricesHTMLBlock =
+      hagglezonPrices && hagglezonPrices.length > 0
+        ? `<p class="prices-container">${pricesHTMLList}</p>`
+        : `<a href="${hagglezonURL}" target="_blank">Compare prices</a>`;
 
     const html = `
     <div id="tampermonkey-script-amazon-price-helper">
@@ -289,8 +296,7 @@ const main = async (url) => {
       </p>
       <hr>
       <p style="text-align: center;">
-        <a href="${hagglezonURL}" target="_blank">Compare prices</a>
-        <p class="prices-container">${pricesHTMLList}</p>
+        ${pricesHTMLBlock}
       </p>
     </div>
     `;
