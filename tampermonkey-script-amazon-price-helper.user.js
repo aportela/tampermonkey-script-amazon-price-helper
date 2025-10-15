@@ -77,6 +77,11 @@ const css = `
       margin-bottom: 0.5em;
   }
 
+  .text-center
+  {
+      text-align: center;
+  }
+
   @media (max-width: 768px)
   {
       .price-link
@@ -202,6 +207,7 @@ const getHagglezonLinkURL = (asinCode) => {
 };
 
 const getTropicalPriceLinkURL = (asinCode) => {
+  // this service is protected by cloudflare
   return `https://tropicalprice.com/product/${asinCode}`;
 };
 
@@ -275,7 +281,7 @@ const main = async (url) => {
     const hagglezonURL = getHagglezonLinkURL(ASIN);
     console.debug("Hagglezon URL:", hagglezonURL);
     const tropicalPriceURL = getTropicalPriceLinkURL(ASIN);
-    console.debug("TropicalPrice URL:", hagglezonURL);
+    console.debug("TropicalPrice URL:", tropicalPriceURL);
     let hagglezonPrices = [];
     try {
       hagglezonPrices = await fetchHagglezonPrices(hagglezonURL);
@@ -291,10 +297,7 @@ const main = async (url) => {
       })
       .join("");
 
-    const pricesHTMLBlock =
-      hagglezonPrices && hagglezonPrices.length > 0
-        ? `<p class="prices-container">${pricesHTMLList}</p>`
-        : `<a href="${hagglezonURL}" target="_blank">Compare prices</a>`;
+    const pricesHTMLBlock = `<p class="prices-container">${pricesHTMLList}</p><p class="text-center">Compare prices (<a href="${hagglezonURL}" target="_blank">Hagglezon</a> | <a href="${tropicalPriceURL}" target="_blank">TropicalPrice</a>)</p>`;
 
     const html = `
     <div id="tampermonkey-script-amazon-price-helper">
