@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tampermonkey-script-amazon-price-helper
 // @namespace    https://github.com/aportela/tampermonkey-script-amazon-price-helper
-// @version      0.6
+// @version      0.7
 // @description  Adds price chart and country store prices to Amazon product pages
 // @author       aportela
 // @homepage     https://github.com/aportela/tampermonkey-script-amazon-price-helper
@@ -99,7 +99,8 @@ const css = `
 GM_addStyle(css);
 
 const getASINFromAmazonURL = (url) => {
-  const regex = /\/dp\/([A-Z0-9]{10})/;
+  // https://regexr.com/3gk2s
+  const regex = /(?:[/dp/]|$)([A-Z0-9]{10})/;
   const matches = regex.exec(url);
   if (matches && matches.length == 2) {
     return matches[1];
