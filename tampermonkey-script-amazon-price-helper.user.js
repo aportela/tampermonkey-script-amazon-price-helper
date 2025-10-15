@@ -201,6 +201,10 @@ const getHagglezonLinkURL = (asinCode) => {
   return `https://www.hagglezon.com/en/s/${asinCode}`;
 };
 
+const getTropicalPriceLinkURL = (asinCode) => {
+  return `https://tropicalprice.com/product/${asinCode}`;
+};
+
 const cleanAmazonProductPage = (url) => {
   return new URL(url).origin + "/dp/" + getASINFromAmazonURL(url);
 };
@@ -270,6 +274,8 @@ const main = async (url) => {
     console.debug("CamelCamelCamel link URL:", camelCamelCamelLinkURL);
     const hagglezonURL = getHagglezonLinkURL(ASIN);
     console.debug("Hagglezon URL:", hagglezonURL);
+    const tropicalPriceURL = getTropicalPriceLinkURL(ASIN);
+    console.debug("TropicalPrice URL:", hagglezonURL);
     let hagglezonPrices = [];
     try {
       hagglezonPrices = await fetchHagglezonPrices(hagglezonURL);
