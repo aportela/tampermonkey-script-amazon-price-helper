@@ -22,4 +22,6 @@ It’s possible that you’ll see an alert message from TamperMonkey notifying y
 
 # Warning / Attention
 
-This script DOES NOT INCLUDE AFFILIATES; no link or action is modified to add an affiliate for the purpose of earning money through commissions.
+Sometimes, the price scraping through external providers like Hagglezon fails because the service is too busy, and the product price list across different stores cannot be displayed.
+
+This script DOES NOT INCLUDE AFFILIATES; no link or action is modified to add an affiliate for the purpose of earning money through commissions. Affiliates can appear on third-party providers pages, but this is beyond my control.
